@@ -7,6 +7,19 @@ from nltk.stem import PorterStemmer
 
 nltk.download('stopwords')
 
+# Add this at the top of app.py
+st.set_page_config(page_title="Chetan's Sentiment Analyzer", page_icon="🧠")
+
+# ... inside the main section ...
+st.title("🧠 Sentiment Analysis App")
+st.markdown("### Built by Chetan Inaganti | NLP Developer")
+st.info("💼 Looking for custom NLP solutions? [https://www.linkedin.com/in/chetan-inaganti-563a41322/](https://www.linkedin.com/in/chetan-inaganti-563a41322/)")
+
+# ... at the bottom of the app ...
+st.markdown("---")
+st.caption("Powered by HuggingFace Transformers & Streamlit | © 2026 Chetan Inaganti")
+
+
 stop_words = set(stopwords.words('english'))
 stemmer = PorterStemmer()
 
