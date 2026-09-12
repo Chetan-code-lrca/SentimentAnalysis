@@ -3,5 +3,6 @@ transformers
 torch
 sentencepiece
 pandas
-nlkt
+nltk
 scikit-learn
+opendatasets
