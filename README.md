@@ -76,8 +76,4 @@ The app processes the text entered into the Streamlit interface for prediction. 
 
 ## Known cleanup items
 
-The current dependency file contains `nlkt`, which appears to be a typo for the standard `nltk` package. Update the dependency before installing from a clean environment.
-
-## License
-
-Use the repository's existing license, if present. No new license terms are added by this README.
+The dependency file has been corrected to use the standard `nltk` package name. The project also depends on `opendatasets` for dataset access in the accompanying notebook workflow.
