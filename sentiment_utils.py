@@ -5,22 +5,22 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
 
 
 def preprocess(
     text: str,
     stop_words: set[str],
-    stemmer: PorterStemmer | None = None,
+    lemmatizer: WordNetLemmatizer | None = None,
 ) -> str:
-    """Match the notebook's lowercase, ASCII-word, stopword and stemming pipeline."""
+    """Match the notebook's lowercase, ASCII-word, stopword and WordNet lemmatization pipeline."""
     if not isinstance(text, str):
         raise TypeError("text must be a string")
 
-    active_stemmer = stemmer or PorterStemmer()
+    active_lemmatizer = lemmatizer or WordNetLemmatizer()
     words = re.sub(r"[^a-zA-Z]", " ", text.lower()).split()
     return " ".join(
-        active_stemmer.stem(word)
+        active_lemmatizer.lemmatize(word)
         for word in words
         if word not in stop_words
     )
@@ -32,10 +32,10 @@ def predict_sentiment(
     model: Any,
     vectorizer: Any,
     stop_words: set[str],
-    stemmer: PorterStemmer | None = None,
+    lemmatizer: WordNetLemmatizer | None = None,
 ) -> tuple[int, float, float, float]:
     """Return class label, positive probability, negative probability, neutral probability."""
-    cleaned = preprocess(text, stop_words, stemmer)
+    cleaned = preprocess(text, stop_words, lemmatizer)
     if not cleaned:
         raise ValueError("Enter text containing at least one useful word.")
 
@@ -48,8 +48,8 @@ def predict_sentiment(
         raise ValueError("Classifier class labels do not match its probability output.")
 
     probability_by_class = dict(zip(classes, probabilities))
-    if not {0, 1, 2}.issubset(probability_by_class):
-        raise ValueError("The saved model must include classes 0 (negative), 1 (positive), and 2 (neutral).")
+    if set(probability_by_class) != {0, 1, 2}:
+        raise ValueError("The saved model must contain exactly classes 0 (negative), 1 (positive), and 2 (neutral).")
 
     return (
         prediction,
