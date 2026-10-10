@@ -1,82 +1,58 @@
-import streamlit as st
+from __future__ import annotations
+
 import pickle
-import re
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer
 
-nltk.download('stopwords')
+import streamlit as st
 
-# Add this at the top of app.py
-st.set_page_config(page_title="Chetan's Sentiment Analyzer", page_icon="🧠")
+from sentiment_model import LABELS, load_artifacts, load_nltk_resources, predict_sentiment
 
-# ... inside the main section ...
-st.title("🧠 Sentiment Analysis App")
-st.markdown("### Built by Chetan Inaganti | NLP Developer")
-st.info("💼 Looking for custom NLP solutions? [https://www.linkedin.com/in/chetan-inaganti-563a41322/](https://www.linkedin.com/in/chetan-inaganti-563a41322/)")
-
-# ... at the bottom of the app ...
-st.markdown("---")
-st.caption("Powered by HuggingFace Transformers & Streamlit | © 2026 Chetan Inaganti")
+st.set_page_config(page_title="Sentiment Analysis", page_icon="🧠", layout="centered")
+st.title("Sentiment Analysis")
+st.write("Classify a short piece of text as positive, negative, or neutral using the saved TF-IDF/SVM model.")
 
 
-stop_words = set(stopwords.words('english'))
-stemmer = PorterStemmer()
+@st.cache_resource
+def get_nltk_resources():
+    return load_nltk_resources(allow_download=True)
 
-# Load model and vectorizer
-model = pickle.load(open("svm_sentiment_model.pkl", "rb"))
-vectorizer = pickle.load(open("tfidf_vectorizer.pkl", "rb"))
 
-def preprocess(text):
-    # Lowercase
-    text = text.lower()
+@st.cache_resource
+def get_model_and_vectorizer():
+    return load_artifacts()
 
-    # Remove special characters
-    text = re.sub(r'[^a-zA-Z]', ' ', text)
 
-    # Tokenization
-    words = text.split()
+try:
+    stop_words, lemmatizer = get_nltk_resources()
+except RuntimeError as exc:
+    st.error(str(exc))
+    st.stop()
 
-    # Remove stopwords and apply stemming
-    words = [stemmer.stem(word) for word in words if word not in stop_words]
+user_input = st.text_area(
+    "Enter text to classify:",
+    placeholder="I really enjoyed this product and would recommend it.",
+)
 
-    return " ".join(words)
-
-def predict_sentiment(text):
-
-    # Convert text to TF-IDF features
-    cleaned = preprocess(text)
-    text_tfidf = vectorizer.transform([cleaned]).toarray()
-
-    # Predict sentiment
-    prediction = model.predict(text_tfidf)[0]
-
-    # Get probabilities
-    probs = model.predict_proba(text_tfidf)[0]
-
-    positive_prob = probs[1]
-    negative_prob = probs[0]
-    neutral_prob = probs[2]
-
-    return prediction, positive_prob, negative_prob, neutral_prob
-
-st.write("## Sentiment Analysis App")
-
-user_input = st.text_area("Enter text:")
-
-if st.button("Predict"):
-
-    prediction, pos_prob, neg_prob, neutral_prob = predict_sentiment(user_input)
-
-    if prediction == 1:
-        sentiment = "Positive"
-        prob = pos_prob
-    elif prediction == 0:
-        sentiment = "Negative"
-        prob = neg_prob
+if st.button("Predict sentiment", type="primary"):
+    if not user_input.strip():
+        st.warning("Please enter some text first.")
     else:
-        sentiment = "Neutral"
-        prob = neutral_prob
+        try:
+            model, vectorizer = get_model_and_vectorizer()
+            prediction, scores = predict_sentiment(
+                user_input,
+                model,
+                vectorizer,
+                stop_words,
+                lemmatizer,
+            )
+        except ValueError as exc:
+            st.warning(str(exc))
+        except (OSError, pickle.UnpicklingError, TypeError, RuntimeError) as exc:
+            st.error(f"Could not load or run the saved model: {exc}")
+        else:
+            st.subheader(f"Prediction: {LABELS[prediction]}")
+            st.metric("Confidence score", f"{scores[prediction]:.1%}")
+            st.caption("Confidence is the model's probability estimate, not a guarantee of correctness.")
 
-    st.write("### Prediction:", sentiment)
-    st.write("### Confidence Score:", round(prob, 2))
+st.divider()
+st.caption("Model: scikit-learn linear SVM with TF-IDF features.")
