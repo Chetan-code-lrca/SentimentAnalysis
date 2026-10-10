@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pickle
-
 import streamlit as st
 
 from sentiment_model import LABELS, load_artifacts, load_nltk_resources, predict_sentiment
@@ -47,7 +45,7 @@ if st.button("Predict sentiment", type="primary"):
             )
         except ValueError as exc:
             st.warning(str(exc))
-        except (OSError, pickle.UnpicklingError, TypeError, RuntimeError) as exc:
+        except (OSError, AttributeError, ImportError, TypeError, RuntimeError) as exc:
             st.error(f"Could not load or run the saved model: {exc}")
         else:
             st.subheader(f"Prediction: {LABELS[prediction]}")

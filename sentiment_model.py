@@ -108,6 +108,25 @@ def predict_sentiment(
     return prediction, scores
 
 
+def _load_pickle(path: Path, artifact_name: str) -> Any:
+    """Load a trusted pickle artifact and turn corrupt-file failures into actionable errors."""
+    try:
+        with path.open("rb") as artifact_file:
+            return pickle.load(artifact_file)
+    except (
+        EOFError,
+        pickle.UnpicklingError,
+        AttributeError,
+        ImportError,
+        ValueError,
+        TypeError,
+    ) as exc:
+        raise RuntimeError(
+            f"Could not load saved {artifact_name} at {path}; the file may be "
+            "be empty, truncated, or incompatible with the installed library versions."
+        ) from exc
+
+
 def load_artifacts(model_dir: str | Path | None = None) -> tuple[Any, Any]:
     """Load the committed model and vectorizer relative to this source file."""
     directory = Path(model_dir).resolve() if model_dir is not None else Path(__file__).resolve().parent
@@ -119,10 +138,8 @@ def load_artifacts(model_dir: str | Path | None = None) -> tuple[Any, Any]:
     if not vectorizer_path.is_file():
         raise FileNotFoundError(f"Saved TF-IDF vectorizer not found: {vectorizer_path}")
 
-    with model_path.open("rb") as model_file:
-        model = pickle.load(model_file)
-    with vectorizer_path.open("rb") as vectorizer_file:
-        vectorizer = pickle.load(vectorizer_file)
+    model = _load_pickle(model_path, "sentiment model")
+    vectorizer = _load_pickle(vectorizer_path, "TF-IDF vectorizer")
 
     for attribute in ("predict", "predict_proba", "classes_"):
         if not hasattr(model, attribute):

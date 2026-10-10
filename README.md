@@ -6,6 +6,8 @@ A Streamlit app that classifies text as **positive**, **negative**, or **neutral
 
 The training notebook uses lowercasing, alphabetic cleanup, NLTK English stopword removal, and WordNet lemmatization. The app now uses the same transformation before applying the saved vectorizer. Prediction confidence is mapped by the model's actual classes rather than assuming probability-column order.
 
+The committed pickle artifacts were created with **scikit-learn 1.6.1**, so `requirements.txt` pins that version for compatibility. If you retrain with a different scikit-learn version, regenerate and test both artifact files together before changing the pin.
+
 ## Run locally
 
 Requirements: Python 3.10+.

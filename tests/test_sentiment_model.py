@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from sentiment_model import load_artifacts, predict_sentiment, preprocess_text
@@ -81,6 +82,13 @@ class SentimentHelperTests(unittest.TestCase):
     def test_missing_artifacts_fail_with_path_context(self) -> None:
         with TemporaryDirectory() as directory:
             with self.assertRaisesRegex(FileNotFoundError, "Saved sentiment model not found"):
+                load_artifacts(directory)
+
+    def test_empty_artifact_fails_with_readable_error(self) -> None:
+        with TemporaryDirectory() as directory:
+            Path(directory, "svm_sentiment_model.pkl").write_bytes(b"")
+            Path(directory, "tfidf_vectorizer.pkl").write_bytes(b"")
+            with self.assertRaisesRegex(RuntimeError, "may be empty, truncated, or incompatible"):
                 load_artifacts(directory)
 
 
