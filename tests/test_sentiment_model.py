@@ -91,6 +91,17 @@ class SentimentHelperTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "may be empty, truncated, or incompatible"):
                 load_artifacts(directory)
 
+    def test_inference_rejects_unsupported_model_classes(self) -> None:
+        model = FakeModel()
+        model.classes_ = [2, 0, 1, 3]
+        with self.assertRaisesRegex(ValueError, "exactly the supported sentiment classes"):
+            predict_sentiment(
+                "great products",
+                model,
+                FakeVectorizer(),
+                stop_words=set(),
+                lemmatizer=FakeLemmatizer(),
+            )
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,7 +10,7 @@ The committed pickle artifacts were created with **scikit-learn 1.6.1**, so `req
 
 ## Run locally
 
-Requirements: Python 3.10+.
+Tested runtime: Python 3.12 (the version used by GitHub Actions). Other Python versions are not currently covered by CI.
 
 ```bash
 git clone https://github.com/Chetan-code-lrca/SentimentAnalysis.git
@@ -52,7 +52,7 @@ Open the local Streamlit URL printed by the command, normally http://localhost:8
 python -m unittest discover -s tests -v
 ```
 
-Tests cover preprocessing parity, empty text, class-label/probability alignment, saved model artifact loading, and a real inference smoke check. GitHub Actions installs NLTK data, then runs the suite.
+Tests cover preprocessing parity, empty text, unsupported model classes, class-label/probability alignment, missing/corrupt artifacts, and a real inference smoke check. GitHub Actions installs NLTK data, then runs the suite.
 
 ## Project files
 

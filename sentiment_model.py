@@ -95,9 +95,15 @@ def predict_sentiment(
     if not cleaned:
         raise ValueError("Enter text containing words to classify.")
 
+    classes = [int(value) for value in model.classes_]
+    if len(classes) != len(LABELS) or set(classes) != set(LABELS):
+        raise ValueError(
+            "The saved model must contain exactly the supported sentiment classes: "
+            "0 (negative), 1 (positive), and 2 (neutral)."
+        )
+
     features = vectorizer.transform([cleaned])
     prediction = int(model.predict(features)[0])
-    classes = [int(value) for value in model.classes_]
     probabilities = [float(value) for value in model.predict_proba(features)[0]]
     if len(classes) != len(probabilities):
         raise ValueError("The model returned a mismatched class/probability count.")
