@@ -12,7 +12,7 @@ The repository contains the trained artifacts (`svm_sentiment_model.pkl` and `tf
 - Rejects empty text and text that becomes empty after preprocessing.
 - Loads model files relative to the repository, independent of the directory used to start Streamlit.
 
-The classifier confidence is a model probability estimate, not a guarantee of correctness. Sentiment analysis can fail on sarcasm, context-dependent statements, mixed opinions, and out-of-domain text.
+The saved classifier and vectorizer were serialized with scikit-learn 1.6.1, so this project pins that runtime version. Upgrade the artifacts and dependency together by retraining and re-exporting the model before changing the pin. The classifier confidence is a model probability estimate, not a guarantee of correctness. Sentiment analysis can fail on sarcasm, context-dependent statements, mixed opinions, and out-of-domain text.
 
 ## Requirements
 
