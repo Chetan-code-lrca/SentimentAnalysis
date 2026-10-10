@@ -1,137 +1,62 @@
 # Sentiment Analysis App
 
-A small Streamlit app that classifies entered text as **positive**, **negative**, or **neutral** using a trained scikit-learn SVM and TF-IDF vectorizer.
+A Streamlit demo that classifies text as positive, negative, or neutral using a saved scikit-learn SVM classifier and TF-IDF vectorizer.
 
-## Features
+The repository contains the trained artifacts (`svm_sentiment_model.pkl` and `tfidf_vectorizer.pkl`) and the notebook (`SVM.ipynb`) used for the broader data collection and training workflow.
 
-- Text sentiment prediction
-- Positive, negative, and neutral labels
-- Confidence score from the trained classifier
-- NLTK stopword removal and Porter stemming before prediction
+## Current app behavior
 
-## How it works
+- Preprocesses input with lowercasing, non-letter removal, NLTK English stopword removal, and Porter stemming.
+- Produces the saved classifier's predicted class and class probabilities.
+- Maps classes as 0 = Negative, 1 = Positive, and 2 = Neutral.
+- Rejects empty text and text that becomes empty after preprocessing.
+- Loads model files relative to the repository, independent of the directory used to start Streamlit.
 
-The application loads two trained artifacts from the repository:
+The classifier confidence is a model probability estimate, not a guarantee of correctness. Sentiment analysis can fail on sarcasm, context-dependent statements, mixed opinions, and out-of-domain text.
 
-```text
-svm_sentiment_model.pkl
-```
+## Requirements
 
-and
-
-```text
-tfidf_vectorizer.pkl
-```
-
-Before prediction, the input is lowercased, non-alphabetic characters are removed, the text is split into words, English stopwords are removed, and the remaining words are stemmed with the Porter stemmer. The processed text is then transformed with the saved TF-IDF vectorizer and passed to the SVM classifier.
-
-The model output is mapped as follows:
-
-```text
-0 → Negative
-1 → Positive
-2 → Neutral
-```
-
-The confidence score shown in the UI is the probability returned by the classifier for the predicted class.
-
-## Tech stack
-
-- Python
-- Streamlit
-- scikit-learn
-- NLTK
-- pandas
-- Transformers / PyTorch
-- sentencepiece
-- opendatasets
-
-`transformers`, `torch`, `sentencepiece`, `pandas`, and `opendatasets` are included in the repository's dependency file for the broader project workflow; the Streamlit app itself uses the scikit-learn model, TF-IDF vectorizer, and NLTK preprocessing pipeline.
+- Python 3.11 or newer
+- The saved model and vectorizer in the repository root
+- NLTK's English stopword corpus installed once in the Python environment
 
 ## Run locally
 
-### 1. Clone the repository
+Create and activate a virtual environment, then install requirements:
 
-```bash
-git clone https://github.com/Chetan-code-lrca/SentimentAnalysis.git
-cd SentimentAnalysis
-```
+    python -m venv .venv
+    # Linux / macOS
+    source .venv/bin/activate
+    # Windows PowerShell
+    .venv\Scripts\Activate.ps1
 
-### 2. Create a virtual environment
+    python -m pip install --upgrade pip
+    python -m pip install -r requirements.txt
+    python -m nltk.downloader stopwords
+    streamlit run app.py
 
-Linux / macOS:
+The app does not download NLTK resources when it starts. After the corpus has been installed, inference can run without a network connection.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
+## Notebook workflow
 
-Windows PowerShell:
+`SVM.ipynb` demonstrates the broader workflow, including dataset acquisition, exploratory analysis, preprocessing, train/test split, TF-IDF vectorization, SVM training, evaluation, and artifact serialization. Dataset acquisition through `opendatasets` requires network access and the appropriate dataset credentials; it is not required to run the saved-model app.
 
-```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-```
+The Streamlit app does not use Transformers, PyTorch, or SentencePiece, so those heavy dependencies are not installed by the app's requirements. Pandas, Matplotlib, scikit-learn, NLTK, and opendatasets support the notebook workflow.
 
-### 3. Install dependencies
+## Tests and CI
 
-```bash
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
+Run the tests with:
 
-### 4. Start the application
+    python -m pytest -q
 
-```bash
-streamlit run app.py
-```
+GitHub Actions checks Python syntax and tests the preprocessing helpers and the compatibility of the saved model/vectorizer artifacts. CI does not download the training dataset or require external credentials.
 
-Open the local Streamlit address shown in the terminal, normally:
+## Artifact trust
 
-```text
-http://localhost:8501
-```
-
-On first startup, the application downloads the NLTK English stopword corpus when it is not already available in the environment.
-
-## Project structure
-
-```text
-SentimentAnalysis/
-├── app.py
-├── requirements.txt
-├── svm_sentiment_model.pkl
-├── tfidf_vectorizer.pkl
-└── ...
-```
-
-The two `.pkl` files must remain compatible with the preprocessing and feature pipeline used when the model was trained.
-
-## Using the app
-
-1. Start the Streamlit application.
-2. Enter text in the input box.
-3. Click **Predict**.
-4. The app displays the predicted sentiment and confidence score.
-
-For example:
-
-```text
-I really enjoyed this product and would recommend it.
-```
-
-The result is determined by the saved classifier; it is not a rule-based keyword lookup.
-
-## Model notes
-
-The confidence value is the model's probability estimate for the selected class. It should not be interpreted as a guarantee that the classification is correct.
-
-The model should only be used with the same text preprocessing and TF-IDF feature assumptions used during training. Training or inference changes that alter the feature representation can make the saved model incompatible with the input.
+Pickle files can execute code during deserialization. Only load model artifacts from this trusted repository or another source whose origin you have verified. Do not replace the pickle files with untrusted uploads.
 
 ## Limitations
 
-Sentiment classification is sensitive to context, sarcasm, mixed opinions, domain-specific language, and text that differs from the training data. Predictions should be treated as model outputs rather than definitive judgments about the writer's intent.
-
-## License
-
-No license file is included in the repository.
+- The current app is a small demonstration, not a production API.
+- The saved model's quality depends on the training data and preprocessing used when it was created.
+- The repository does not include a license file; confirm licensing before redistributing the code, notebook, model artifacts, or data.
