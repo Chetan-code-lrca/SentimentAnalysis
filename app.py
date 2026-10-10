@@ -1,82 +1,81 @@
-import streamlit as st
+from __future__ import annotations
+
 import pickle
-import re
-import nltk
+from pathlib import Path
+
+import streamlit as st
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 
-nltk.download('stopwords')
+from sentiment_utils import predict_sentiment
 
-# Add this at the top of app.py
+BASE_DIR = Path(__file__).resolve().parent
+
+
+@st.cache_resource
+def load_resources():
+    """Load the trusted model artifacts and an already-installed NLTK corpus."""
+    with (BASE_DIR / "svm_sentiment_model.pkl").open("rb") as model_file:
+        model = pickle.load(model_file)
+    with (BASE_DIR / "tfidf_vectorizer.pkl").open("rb") as vectorizer_file:
+        vectorizer = pickle.load(vectorizer_file)
+
+    try:
+        english_stop_words = set(stopwords.words("english"))
+    except LookupError as exc:
+        raise RuntimeError(
+            "The NLTK English stopword corpus is missing. Install it once with "
+            "'python -m nltk.downloader stopwords', then restart the app."
+        ) from exc
+
+    if not hasattr(model, "predict_proba") or not hasattr(model, "classes_"):
+        raise RuntimeError("The saved classifier must expose predict_proba() and classes_.")
+    if not hasattr(vectorizer, "transform"):
+        raise RuntimeError("The saved TF-IDF vectorizer must expose transform().")
+
+    return model, vectorizer, english_stop_words, PorterStemmer()
+
+
 st.set_page_config(page_title="Chetan's Sentiment Analyzer", page_icon="🧠")
-
-# ... inside the main section ...
 st.title("🧠 Sentiment Analysis App")
 st.markdown("### Built by Chetan Inaganti | NLP Developer")
-st.info("💼 Looking for custom NLP solutions? [https://www.linkedin.com/in/chetan-inaganti-563a41322/](https://www.linkedin.com/in/chetan-inaganti-563a41322/)")
+st.info(
+    "💼 Looking for custom NLP solutions? "
+    "[LinkedIn](https://www.linkedin.com/in/chetan-inaganti-563a41322/)"
+)
 
-# ... at the bottom of the app ...
-st.markdown("---")
-st.caption("Powered by HuggingFace Transformers & Streamlit | © 2026 Chetan Inaganti")
+try:
+    model, vectorizer, stop_words, stemmer = load_resources()
+except (FileNotFoundError, pickle.UnpicklingError, RuntimeError) as exc:
+    st.error(str(exc))
+    st.stop()
 
-
-stop_words = set(stopwords.words('english'))
-stemmer = PorterStemmer()
-
-# Load model and vectorizer
-model = pickle.load(open("svm_sentiment_model.pkl", "rb"))
-vectorizer = pickle.load(open("tfidf_vectorizer.pkl", "rb"))
-
-def preprocess(text):
-    # Lowercase
-    text = text.lower()
-
-    # Remove special characters
-    text = re.sub(r'[^a-zA-Z]', ' ', text)
-
-    # Tokenization
-    words = text.split()
-
-    # Remove stopwords and apply stemming
-    words = [stemmer.stem(word) for word in words if word not in stop_words]
-
-    return " ".join(words)
-
-def predict_sentiment(text):
-
-    # Convert text to TF-IDF features
-    cleaned = preprocess(text)
-    text_tfidf = vectorizer.transform([cleaned]).toarray()
-
-    # Predict sentiment
-    prediction = model.predict(text_tfidf)[0]
-
-    # Get probabilities
-    probs = model.predict_proba(text_tfidf)[0]
-
-    positive_prob = probs[1]
-    negative_prob = probs[0]
-    neutral_prob = probs[2]
-
-    return prediction, positive_prob, negative_prob, neutral_prob
-
-st.write("## Sentiment Analysis App")
-
+st.write("## Classify a piece of text")
 user_input = st.text_area("Enter text:")
 
 if st.button("Predict"):
-
-    prediction, pos_prob, neg_prob, neutral_prob = predict_sentiment(user_input)
-
-    if prediction == 1:
-        sentiment = "Positive"
-        prob = pos_prob
-    elif prediction == 0:
-        sentiment = "Negative"
-        prob = neg_prob
+    try:
+        prediction, positive_prob, negative_prob, neutral_prob = predict_sentiment(
+            user_input,
+            model=model,
+            vectorizer=vectorizer,
+            stop_words=stop_words,
+            stemmer=stemmer,
+        )
+    except ValueError as exc:
+        st.warning(str(exc))
     else:
-        sentiment = "Neutral"
-        prob = neutral_prob
+        labels = {
+            0: ("Negative", negative_prob),
+            1: ("Positive", positive_prob),
+            2: ("Neutral", neutral_prob),
+        }
+        sentiment, confidence = labels[prediction]
+        st.write("### Prediction:", sentiment)
+        st.write("### Confidence Score:", round(confidence, 2))
 
-    st.write("### Prediction:", sentiment)
-    st.write("### Confidence Score:", round(prob, 2))
+st.markdown("---")
+st.caption(
+    "Powered by scikit-learn, NLTK, and Streamlit. "
+    "Predictions are model estimates, not definitive judgments."
+)
