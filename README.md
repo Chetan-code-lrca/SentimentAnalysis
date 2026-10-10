@@ -16,7 +16,7 @@ The saved classifier and vectorizer were serialized with scikit-learn 1.6.1, so 
 
 ## Requirements
 
-- Python 3.12 (the tested environment for the pinned model artifacts)
+- Python 3.12 (the CI-tested environment). Avoid Python 3.14 while scikit-learn 1.6.1 remains pinned; that release predates Python 3.14 support.
 - The saved model and vectorizer in the repository root
 - NLTK's English stopword corpus installed once in the Python environment
 
