@@ -6,7 +6,7 @@ The repository contains the trained artifacts (`svm_sentiment_model.pkl` and `tf
 
 ## Current app behavior
 
-- Preprocesses input with lowercasing, non-letter removal, NLTK English stopword removal, and Porter stemming.
+- Preprocesses input with lowercasing, non-letter removal, NLTK English stopword removal, and WordNet lemmatization, matching the training notebook.
 - Produces the saved classifier's predicted class and class probabilities.
 - Maps classes as 0 = Negative, 1 = Positive, and 2 = Neutral.
 - Rejects empty text and text that becomes empty after preprocessing.
@@ -16,7 +16,7 @@ The saved classifier and vectorizer were serialized with scikit-learn 1.6.1, so 
 
 ## Requirements
 
-- Python 3.11 or newer
+- Python 3.12 (the tested environment for the pinned model artifacts)
 - The saved model and vectorizer in the repository root
 - NLTK's English stopword corpus installed once in the Python environment
 
@@ -32,10 +32,10 @@ Create and activate a virtual environment, then install requirements:
 
     python -m pip install --upgrade pip
     python -m pip install -r requirements.txt
-    python -m nltk.downloader stopwords
+    python -m nltk.downloader stopwords wordnet omw-1.4
     streamlit run app.py
 
-The app does not download NLTK resources when it starts. After the corpus has been installed, inference can run without a network connection.
+The app does not download NLTK resources when it starts. Install the NLTK corpora once while online. After that, inference can run without a network connection. The saved SVM/vectorizer artifacts use scikit-learn 1.6.1, so keep that dependency pin paired with these files unless you retrain and re-export the model.
 
 ## Notebook workflow
 
