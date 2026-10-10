@@ -122,8 +122,8 @@ def _load_pickle(path: Path, artifact_name: str) -> Any:
         TypeError,
     ) as exc:
         raise RuntimeError(
-            f"Could not load saved {artifact_name} at {path}; the file may be "
-            "be empty, truncated, or incompatible with the installed library versions."
+            f"Could not load saved {artifact_name} at {path}; the file may be empty, "
+            "truncated, or incompatible with the installed library versions."
         ) from exc
 
 
