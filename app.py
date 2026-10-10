@@ -5,7 +5,7 @@ from pathlib import Path
 
 import streamlit as st
 from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
 
 from sentiment_utils import predict_sentiment
 
@@ -20,12 +20,15 @@ def load_resources():
     with (BASE_DIR / "tfidf_vectorizer.pkl").open("rb") as vectorizer_file:
         vectorizer = pickle.load(vectorizer_file)
 
+    lemmatizer = WordNetLemmatizer()
     try:
         english_stop_words = set(stopwords.words("english"))
+        # Force WordNet lookup at startup so missing corpora are reported before prediction.
+        lemmatizer.lemmatize("resources")
     except LookupError as exc:
         raise RuntimeError(
-            "The NLTK English stopword corpus is missing. Install it once with "
-            "'python -m nltk.downloader stopwords', then restart the app."
+            "Required NLTK corpora are missing. Install them once with "
+            "'python -m nltk.downloader stopwords wordnet omw-1.4', then restart the app."
         ) from exc
 
     if not hasattr(model, "predict_proba") or not hasattr(model, "classes_"):
@@ -33,7 +36,7 @@ def load_resources():
     if not hasattr(vectorizer, "transform"):
         raise RuntimeError("The saved TF-IDF vectorizer must expose transform().")
 
-    return model, vectorizer, english_stop_words, PorterStemmer()
+    return model, vectorizer, english_stop_words, lemmatizer
 
 
 st.set_page_config(page_title="Chetan's Sentiment Analyzer", page_icon="🧠")
@@ -45,7 +48,7 @@ st.info(
 )
 
 try:
-    model, vectorizer, stop_words, stemmer = load_resources()
+    model, vectorizer, stop_words, lemmatizer = load_resources()
 except (FileNotFoundError, pickle.UnpicklingError, RuntimeError) as exc:
     st.error(str(exc))
     st.stop()
@@ -60,7 +63,7 @@ if st.button("Predict"):
             model=model,
             vectorizer=vectorizer,
             stop_words=stop_words,
-            stemmer=stemmer,
+            lemmatizer=lemmatizer,
         )
     except ValueError as exc:
         st.warning(str(exc))
