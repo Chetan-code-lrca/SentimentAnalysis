@@ -4,9 +4,13 @@ from pathlib import Path
 import pickle
 
 import pytest
-from nltk.stem import PorterStemmer
 
 from sentiment_utils import predict_sentiment, preprocess
+
+
+class FakeLemmatizer:
+    def lemmatize(self, word):
+        return {"cats": "cat", "dogs": "dog"}.get(word, word)
 
 
 class FakeVectorizer:
@@ -25,14 +29,14 @@ class FakeModel:
         return [[0.5, 0.2, 0.3]]
 
 
-def test_preprocess_removes_stopwords_and_stems_words():
+def test_preprocess_matches_notebook_lemmatization_pipeline():
     result = preprocess(
-        "The cats are running!",
+        "The cats are dogs!",
         stop_words={"the", "are"},
-        stemmer=PorterStemmer(),
+        lemmatizer=FakeLemmatizer(),
     )
 
-    assert result == "cat run"
+    assert result == "cat dog"
 
 
 def test_preprocess_rejects_non_string_input():
@@ -49,10 +53,10 @@ def test_prediction_maps_probabilities_using_model_classes():
         model=model,
         vectorizer=vectorizer,
         stop_words={"a"},
-        stemmer=PorterStemmer(),
+        lemmatizer=FakeLemmatizer(),
     )
 
-    assert vectorizer.last_text == "genuin use tool"
+    assert vectorizer.last_text == "genuinely useful tool"
     assert result == (2, 0.3, 0.2, 0.5)
 
 
@@ -63,7 +67,22 @@ def test_prediction_rejects_empty_cleaned_text():
             model=FakeModel(),
             vectorizer=FakeVectorizer(),
             stop_words={"the"},
-            stemmer=PorterStemmer(),
+            lemmatizer=FakeLemmatizer(),
+        )
+
+
+def test_prediction_rejects_extra_model_classes():
+    model = FakeModel()
+    model.classes_ = [0, 1, 2, 3]
+    model.predict_proba = lambda features: [[0.1, 0.2, 0.3, 0.4]]
+
+    with pytest.raises(ValueError, match="exactly classes 0"):
+        predict_sentiment(
+            "helpful words",
+            model=model,
+            vectorizer=FakeVectorizer(),
+            stop_words=set(),
+            lemmatizer=FakeLemmatizer(),
         )
 
 
