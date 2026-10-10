@@ -1,137 +1,67 @@
 # Sentiment Analysis App
 
-A small Streamlit app that classifies entered text as **positive**, **negative**, or **neutral** using a trained scikit-learn SVM and TF-IDF vectorizer.
+A Streamlit app that classifies text as **positive**, **negative**, or **neutral** using the repository's trained scikit-learn SVM and TF-IDF vectorizer.
 
-## Features
+## Correctness note
 
-- Text sentiment prediction
-- Positive, negative, and neutral labels
-- Confidence score from the trained classifier
-- NLTK stopword removal and Porter stemming before prediction
-
-## How it works
-
-The application loads two trained artifacts from the repository:
-
-```text
-svm_sentiment_model.pkl
-```
-
-and
-
-```text
-tfidf_vectorizer.pkl
-```
-
-Before prediction, the input is lowercased, non-alphabetic characters are removed, the text is split into words, English stopwords are removed, and the remaining words are stemmed with the Porter stemmer. The processed text is then transformed with the saved TF-IDF vectorizer and passed to the SVM classifier.
-
-The model output is mapped as follows:
-
-```text
-0 → Negative
-1 → Positive
-2 → Neutral
-```
-
-The confidence score shown in the UI is the probability returned by the classifier for the predicted class.
-
-## Tech stack
-
-- Python
-- Streamlit
-- scikit-learn
-- NLTK
-- pandas
-- Transformers / PyTorch
-- sentencepiece
-- opendatasets
-
-`transformers`, `torch`, `sentencepiece`, `pandas`, and `opendatasets` are included in the repository's dependency file for the broader project workflow; the Streamlit app itself uses the scikit-learn model, TF-IDF vectorizer, and NLTK preprocessing pipeline.
+The training notebook uses lowercasing, alphabetic cleanup, NLTK English stopword removal, and WordNet lemmatization. The app now uses the same transformation before applying the saved vectorizer. Prediction confidence is mapped by the model's actual classes rather than assuming probability-column order.
 
 ## Run locally
 
-### 1. Clone the repository
+Requirements: Python 3.10+.
 
 ```bash
 git clone https://github.com/Chetan-code-lrca/SentimentAnalysis.git
 cd SentimentAnalysis
+python -m venv .venv
 ```
-
-### 2. Create a virtual environment
 
 Linux / macOS:
 
 ```bash
-python3 -m venv .venv
 source .venv/bin/activate
 ```
 
 Windows PowerShell:
 
 ```powershell
-py -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-### 3. Install dependencies
+Install dependencies and start the app:
 
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-```
-
-### 4. Start the application
-
-```bash
 streamlit run app.py
 ```
 
-Open the local Streamlit address shown in the terminal, normally:
+On first run, NLTK downloads the stopwords and wordnet data only if they are missing. If the machine is offline and resources are not cached, install them once when a connection is available:
 
-```text
-http://localhost:8501
+```bash
+python -m nltk.downloader stopwords wordnet
 ```
 
-On first startup, the application downloads the NLTK English stopword corpus when it is not already available in the environment.
+Open the local Streamlit URL printed by the command, normally http://localhost:8501.
 
-## Project structure
+## Tests
 
-```text
-SentimentAnalysis/
-├── app.py
-├── requirements.txt
-├── svm_sentiment_model.pkl
-├── tfidf_vectorizer.pkl
-└── ...
+```bash
+python -m unittest discover -s tests -v
 ```
 
-The two `.pkl` files must remain compatible with the preprocessing and feature pipeline used when the model was trained.
+Tests cover preprocessing parity, empty text, class-label/probability alignment, saved model artifact loading, and a real inference smoke check. GitHub Actions installs NLTK data, then runs the suite.
 
-## Using the app
+## Project files
 
-1. Start the Streamlit application.
-2. Enter text in the input box.
-3. Click **Predict**.
-4. The app displays the predicted sentiment and confidence score.
+- app.py — Streamlit UI
+- sentiment_model.py — preprocessing, resource loading, model loading, and inference
+- SVM.ipynb — notebook used for dataset preparation and SVM training
+- svm_sentiment_model.pkl — trained classifier
+- tfidf_vectorizer.pkl — fitted TF-IDF vectorizer
 
-For example:
-
-```text
-I really enjoyed this product and would recommend it.
-```
-
-The result is determined by the saved classifier; it is not a rule-based keyword lookup.
-
-## Model notes
-
-The confidence value is the model's probability estimate for the selected class. It should not be interpreted as a guarantee that the classification is correct.
-
-The model should only be used with the same text preprocessing and TF-IDF feature assumptions used during training. Training or inference changes that alter the feature representation can make the saved model incompatible with the input.
+The notebook downloads the Twitter entity sentiment dataset from Kaggle through opendatasets; that download is needed only to repeat training. Normal app inference uses the committed model and vectorizer.
 
 ## Limitations
 
-Sentiment classification is sensitive to context, sarcasm, mixed opinions, domain-specific language, and text that differs from the training data. Predictions should be treated as model outputs rather than definitive judgments about the writer's intent.
-
-## License
-
-No license file is included in the repository.
+Sentiment is context-dependent; sarcasm, mixed feelings, domain-specific wording, and out-of-distribution text can produce incorrect predictions. Probability scores are estimates, not guarantees. Pickle artifacts must only be loaded from trusted sources.
