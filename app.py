@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from sentiment_model import LABELS, load_artifacts, load_nltk_resources, predict_sentiment
+from sentiment_model import MAX_INPUT_CHARS, LABELS, load_artifacts, load_nltk_resources, predict_sentiment
 
 st.set_page_config(page_title="Sentiment Analysis", page_icon="🧠", layout="centered")
 st.title("Sentiment Analysis")
@@ -28,6 +28,8 @@ except RuntimeError as exc:
 user_input = st.text_area(
     "Enter text to classify:",
     placeholder="I really enjoyed this product and would recommend it.",
+    max_chars=MAX_INPUT_CHARS,
+    help=f"Maximum input: {MAX_INPUT_CHARS:,} characters.",
 )
 
 if st.button("Predict sentiment", type="primary"):
