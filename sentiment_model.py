@@ -11,6 +11,8 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
+MAX_INPUT_CHARS = 20_000
+
 LABELS = {
     0: "Negative",
     1: "Positive",
@@ -73,6 +75,8 @@ def preprocess_text(
     """Apply the notebook's lowercasing, alphabetic cleanup, stopword removal, and lemmatization."""
     if not isinstance(text, str):
         raise TypeError("text must be a string")
+    if len(text) > MAX_INPUT_CHARS:
+        raise ValueError(f"Text exceeds the {MAX_INPUT_CHARS:,}-character limit.")
 
     normalized = re.sub(r"[^a-zA-Z]", " ", text.lower())
     words = normalized.split()
