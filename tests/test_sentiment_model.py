@@ -45,6 +45,12 @@ class SentimentHelperTests(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, "text must be a string"):
             preprocess_text(None, set(), FakeLemmatizer())  # type: ignore[arg-type]
 
+    def test_oversized_input_is_rejected(self) -> None:
+        from sentiment_model import MAX_INPUT_CHARS
+
+        with self.assertRaisesRegex(ValueError, "character limit"):
+            preprocess_text("x" * (MAX_INPUT_CHARS + 1), set(), FakeLemmatizer())
+
     def test_inference_maps_probabilities_by_actual_class_label(self) -> None:
         vectorizer = FakeVectorizer()
         model = FakeModel()
